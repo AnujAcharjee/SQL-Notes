@@ -32,12 +32,44 @@ INSERT INTO emp_projects VALUES
 (103, NULL, 'Unassigned R&D'), -- NULL lead_emp_id!
 (104, 99,   'External Audit'); -- Orphan lead_emp_id (99 not in staff)
 
+-- ============================================================================
+-- VISUAL DATA IN TABLES:
+-- ============================================================================
+--
+--  [ staff ]
+--  +--------+-------+-------+
+--  | emp_id | name  | bonus |
+--  +--------+-------+-------+
+--  | 1      | Aarav | 5000  |
+--  | 2      | Sneha | NULL  | <-- bonus IS NULL
+--  | 3      | Raj   | 3000  |
+--  | 4      | Priya | NULL  | <-- bonus IS NULL
+--  +--------+-------+-------+
+--
+--  [ emp_projects ]
+--  +---------+-------------+------------------+
+--  | proj_id | lead_emp_id | proj_name        |
+--  +---------+-------------+------------------+
+--  | 101     | 1           | Website Redesign | (Led by Aarav)
+--  | 102     | 3           | Mobile App       | (Led by Raj)
+--  | 103     | NULL        | Unassigned R&D   | (No leader!)
+--  | 104     | 99          | External Audit   | (lead 99 not in staff)
+--  +---------+-------------+------------------+
+-- ============================================================================
+
 -- ----------------------------------------------------------------------------
 -- Q1: COUNT(*) vs COUNT(column)
 --
 -- What happens:
 --   COUNT(*)     -> Counts ALL rows (returns 4).
 --   COUNT(bonus) -> Ignores NULLs (returns 2).
+--
+-- Expected Output:
+-- +-------------+------------------+
+-- | total_staff | staff_with_bonus |
+-- +-------------+------------------+
+-- | 4           | 2                |
+-- +-------------+------------------+
 -- ----------------------------------------------------------------------------
 SELECT
     COUNT(*) AS total_staff,
@@ -50,6 +82,16 @@ FROM staff;
 -- What we are doing:
 --   - COALESCE(bonus, 0) replaces NULL bonus with 0.
 --   - NULLIF(x, 0) returns NULL if x = 0, preventing a division-by-zero error.
+--
+-- Expected Output:
+-- +-------+------------+------------+
+-- | name  | safe_bonus | ratio_safe |
+-- +-------+------------+------------+
+-- | Aarav | 5000       | 2.0000     | (10000 / 5000 = 2)
+-- | Sneha | 0          | NULL       | (NULLIF returned NULL -> no crash!)
+-- | Raj   | 3000       | 3.3333     | (10000 / 3000 = 3.33)
+-- | Priya | 0          | NULL       | (NULLIF returned NULL -> no crash!)
+-- +-------+------------+------------+
 -- ----------------------------------------------------------------------------
 SELECT
     name,
@@ -64,6 +106,14 @@ FROM staff;
 -- TRAP: `emp_projects` has a row where `lead_emp_id` IS NULL (proj_id 103).
 --       `NOT IN (1, 3, NULL, 99)` evaluates to UNKNOWN for every row -> 0 rows!
 -- FIX:  Use `NOT EXISTS` (always NULL-safe).
+--
+-- Expected Output with NOT EXISTS:
+-- +-------+
+-- | name  |
+-- +-------+
+-- | Sneha |
+-- | Priya |
+-- +-------+
 -- ----------------------------------------------------------------------------
 -- BAD (returns 0 rows because of NULL in emp_projects.lead_emp_id):
 SELECT name
@@ -84,6 +134,18 @@ WHERE NOT EXISTS (
 --
 -- MySQL does not have a `FULL OUTER JOIN` keyword.
 -- Simulate it by combining a LEFT JOIN and a RIGHT JOIN with `UNION`.
+--
+-- Expected Output:
+-- +--------+-------+------------------+
+-- | emp_id | name  | proj_name        |
+-- +--------+-------+------------------+
+-- | 1      | Aarav | Website Redesign |
+-- | 2      | Sneha | NULL             | <-- staff with no project
+-- | 3      | Raj   | Mobile App       |
+-- | 4      | Priya | NULL             | <-- staff with no project
+-- | NULL   | NULL  | Unassigned R&D   | <-- project with no staff
+-- | NULL   | NULL  | External Audit   | <-- project with unknown lead (99)
+-- +--------+-------+------------------+
 -- ----------------------------------------------------------------------------
 SELECT s.emp_id, s.name, p.proj_name
 FROM staff s

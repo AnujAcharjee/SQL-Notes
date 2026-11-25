@@ -22,11 +22,36 @@ INSERT INTO emp_salaries VALUES
 (6, 'Neha',   'Marketing',   80000),
 (7, 'Vikram', 'Marketing',   65000);
 
+-- ============================================================================
+-- VISUAL DATA IN TABLE:
+-- ============================================================================
+--
+--  [ emp_salaries ]
+--  +--------+--------+-------------+--------+
+--  | emp_id | name   | department  | salary |
+--  +--------+--------+-------------+--------+
+--  | 1      | Aarav  | Engineering | 100000 | <-- Tie for 1st in Engineering
+--  | 2      | Sneha  | Engineering | 100000 | <-- Tie for 1st in Engineering
+--  | 3      | Raj    | Engineering | 85000  |
+--  | 4      | Priya  | Engineering | 70000  |
+--  | 5      | Amit   | Marketing   | 90000  |
+--  | 6      | Neha   | Marketing   | 80000  |
+--  | 7      | Vikram | Marketing   | 65000  |
+--  +--------+--------+-------------+--------+
+-- ============================================================================
+
 -- ----------------------------------------------------------------------------
 -- Q1: Find the 2nd highest DISTINCT salary overall.
 --
 -- Method A: Subquery (works in almost every SQL database)
 -- Think: "What is the maximum salary that is strictly less than the overall max?"
+--
+-- Expected Output:
+-- +-----------------------+
+-- | second_highest_salary |
+-- +-----------------------+
+-- | 90000                 |
+-- +-----------------------+
 -- ----------------------------------------------------------------------------
 SELECT MAX(salary) AS second_highest_salary
 FROM emp_salaries
@@ -49,6 +74,13 @@ LIMIT 1 OFFSET 1;
 --   ROW_NUMBER() -> 1, 2, 3 (treats 100k as 2nd!)
 --   RANK()       -> 1, 1, 3 (skips 2nd!)
 --   DENSE_RANK() -> 1, 1, 2 (90k is properly 2nd!)
+--
+-- Expected Output:
+-- +------+--------+
+-- | name | salary |
+-- +------+--------+
+-- | Amit | 90000  |
+-- +------+--------+
 -- ----------------------------------------------------------------------------
 WITH ranked_salaries AS (
     SELECT
@@ -68,6 +100,17 @@ WHERE rnk = 2;
 -- 1. "In each department" -> PARTITION BY department.
 -- 2. "Highest-paid" -> ORDER BY salary DESC.
 -- 3. Filter rnk <= 2 in an outer query / CTE (cannot filter window functions in WHERE).
+--
+-- Expected Output:
+-- +-------------+-------+--------+-----------+
+-- | department  | name  | salary | dept_rank |
+-- +-------------+-------+--------+-----------+
+-- | Engineering | Aarav | 100000 | 1         |
+-- | Engineering | Sneha | 100000 | 1         |
+-- | Engineering | Raj   | 85000  | 2         |
+-- | Marketing   | Amit  | 90000  | 1         |
+-- | Marketing   | Neha  | 80000  | 2         |
+-- +-------------+-------+--------+-----------+
 -- ----------------------------------------------------------------------------
 WITH dept_ranked AS (
     SELECT

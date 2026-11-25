@@ -44,12 +44,57 @@ INSERT INTO bonuses VALUES
 (102, 2, 10000),
 (103, 99, 5000); -- Orphan bonus record (emp_id 99 does not exist)
 
+-- ============================================================================
+-- VISUAL DATA IN TABLES:
+-- ============================================================================
+--
+--  [ departments ]
+--  +---------+-------------+
+--  | dept_id | dept_name   |
+--  +---------+-------------+
+--  | 1       | Engineering |
+--  | 2       | Marketing   |
+--  | 3       | HR          |
+--  +---------+-------------+
+--
+--  [ employees ]
+--  +--------+-------+---------+------------+--------+
+--  | emp_id | name  | dept_id | manager_id | salary |
+--  +--------+-------+---------+------------+--------+
+--  | 1      | Aarav | 1       | NULL       | 120000 | (CEO)
+--  | 2      | Sneha | 1       | 1          | 90000  |
+--  | 3      | Raj   | 2       | 1          | 75000  |
+--  | 4      | Priya | NULL    | 2          | 65000  | (No department!)
+--  | 5      | Amit  | 3       | 1          | 60000  |
+--  +--------+-------+---------+------------+--------+
+--
+--  [ bonuses ]
+--  +----------+--------+--------------+
+--  | bonus_id | emp_id | bonus_amount |
+--  +----------+--------+--------------+
+--  | 101      | 1      | 15000        |
+--  | 102      | 2      | 10000        |
+--  | 103      | 99     | 5000         | (Orphan: emp_id 99 doesn't exist)
+--  +----------+--------+--------------+
+-- ============================================================================
+
 -- ----------------------------------------------------------------------------
 -- Q1: List ALL employees and their department names (even if dept is NULL).
 --
 -- How to think about it:
 -- 1. Output grain: 1 row per employee.
 -- 2. "Keep all employees" -> employees is the LEFT table -> use LEFT JOIN.
+--
+-- Expected Output:
+-- +--------+-------+-------------+
+-- | emp_id | name  | department  |
+-- +--------+-------+-------------+
+-- | 1      | Aarav | Engineering |
+-- | 2      | Sneha | Engineering |
+-- | 3      | Raj   | Marketing   |
+-- | 4      | Priya | Unassigned  |  <-- Priya has NULL dept_id
+-- | 5      | Amit  | HR          |
+-- +--------+-------+-------------+
 -- ----------------------------------------------------------------------------
 SELECT
     e.emp_id,
@@ -66,7 +111,15 @@ LEFT JOIN departments d
 -- 1. Start with LEFT JOIN from employees to bonuses.
 -- 2. Employees with no bonus will have NULL in bonuses.bonus_id.
 -- 3. Filter with WHERE b.bonus_id IS NULL.
--- (Same pattern for: "Customers who never placed an order")
+--
+-- Expected Output:
+-- +--------+-------+
+-- | emp_id | name  |
+-- +--------+-------+
+-- | 3      | Raj   |
+-- | 4      | Priya |
+-- | 5      | Amit  |
+-- +--------+-------+
 -- ----------------------------------------------------------------------------
 SELECT
     e.emp_id,
@@ -84,6 +137,17 @@ WHERE b.bonus_id IS NULL;
 -- 2. Alias e = employee, m = manager.
 -- 3. Match e.manager_id = m.emp_id.
 -- 4. Use LEFT JOIN so the CEO (manager_id IS NULL) is still included.
+--
+-- Expected Output:
+-- +---------------+--------------+
+-- | employee_name | manager_name |
+-- +---------------+--------------+
+-- | Aarav         | No Manager   |  <-- CEO
+-- | Sneha         | Aarav        |
+-- | Raj           | Aarav        |
+-- | Priya         | Sneha        |
+-- | Amit          | Aarav        |
+-- +---------------+--------------+
 -- ----------------------------------------------------------------------------
 SELECT
     e.name AS employee_name,
