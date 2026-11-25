@@ -1,3 +1,17 @@
+-- ============================================================================
+-- SETUP & SEED DATA: Students, Exam Scores, and Projects
+-- ============================================================================
+-- What this file is:
+--   Creates the sample tables (students, exam_scores, projects) and inserts
+--   test data used across 02_Subqueries, 03_CTEs, and 04_Window_Functions.
+--
+-- Table Relationships:
+--   students (1) ──< exam_scores (many)   via student_id
+--   students (1) ──< projects (many)      via student_id
+-- ============================================================================
+
+-- Uncomment the CREATE TABLE statements below if setting up from scratch:
+
 -- CREATE TABLE students (
 --   student_id INT PRIMARY KEY,
 --   name VARCHAR(50) NOT NULL,
